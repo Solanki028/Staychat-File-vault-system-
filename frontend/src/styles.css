@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #fafbfc;
+  color: #1a1d23;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ─── Ambient Background ─── */
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.ambient-orb:nth-child(1) {
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  right: -100px;
+  background: linear-gradient(135deg, #dbe4ff, #bac8ff);
+  animation: orbit1 25s ease-in-out infinite alternate;
+}
+
+.ambient-orb:nth-child(2) {
+  width: 500px;
+  height: 500px;
+  bottom: -150px;
+  left: -100px;
+  background: linear-gradient(135deg, #d0ebff, #a5d8ff);
+  animation: orbit2 30s ease-in-out infinite alternate;
+}
+
+.ambient-orb:nth-child(3) {
+  width: 350px;
+  height: 350px;
+  top: 40%;
+  left: 50%;
+  background: linear-gradient(135deg, #e5dbff, #d0bfff);
+  animation: orbit3 22s ease-in-out infinite alternate;
+}
+
+@keyframes orbit1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-80px, 60px) scale(1.1); }
+}
+
+@keyframes orbit2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, -40px) scale(0.9); }
+}
+
+@keyframes orbit3 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, 30px) scale(1.15); }
+}
+
+/* ─── Noise Texture Overlay ─── */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ─── Custom Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4cdd5;
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #919eab;
+}
+
+/* ─── Focus Styles ─── */
+*:focus-visible {
+  outline: 2px solid #5c7cfa;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: #dbe4ff;
+  color: #364fc7;
+}
+
+/* ─── Utility Transitions ─── */
+.transition-default {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── File Type Document Icons ─── */
+.file-doc-icon {
+  position: relative;
+  width: 56px;
+  height: 68px;
+  border-radius: 4px 12px 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.file-doc-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 0 0 0 4px;
+  background: rgba(255,255,255,0.3);
+}
+
+.file-doc-pdf { background: linear-gradient(135deg, #e03131, #c92a2a); }
+.file-doc-doc { background: linear-gradient(135deg, #1971c2, #1864ab); }
+.file-doc-xls { background: linear-gradient(135deg, #2f9e44, #2b8a3e); }
+.file-doc-ppt { background: linear-gradient(135deg, #e8590c, #d9480f); }
+.file-doc-zip { background: linear-gradient(135deg, #e67700, #d9480f); }
+.file-doc-json { background: linear-gradient(135deg, #6741d9, #5f3dc4); }
+.file-doc-txt { background: linear-gradient(135deg, #495057, #343a40); }
+.file-doc-csv { background: linear-gradient(135deg, #0c8599, #0b7285); }
+.file-doc-md { background: linear-gradient(135deg, #1098ad, #0c8599); }
+.file-doc-default { background: linear-gradient(135deg, #868e96, #495057); }
