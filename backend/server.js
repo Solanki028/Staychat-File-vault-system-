@@ -31,6 +31,15 @@ app.use(
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    message: 'Staychat Vault API is Online',
+    version: '2.0.0',
+    status: 'Running',
+    documentation: 'https://github.com/Solanki028/Staychat-File-vault-system-'
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', service: 'file-vault-system' });
 });
