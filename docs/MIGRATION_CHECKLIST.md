@@ -83,10 +83,10 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 8: Vehicle Registry & Expiry Tracking Module
-- [ ] Create `Vehicle` model with indexed `registrationExpiry` and `insuranceExpiry`.
-- [ ] Implement `VehicleRepository`, `VehicleService`, `VehicleController`, and `/api/v1/vehicles` endpoints.
-- [ ] Build frontend Vehicle management table with automatic renewal expiry badges (Warning / Expired).
-- [ ] Verify vehicle CRUD and expiry indicators.
+- [x] Create `Vehicle` model with indexed `registrationExpiry` and `insuranceExpiry`.
+- [x] Implement `VehicleRepository`, `VehicleService`, `VehicleController`, and `/api/v1/vehicles` endpoints.
+- [x] Build frontend Vehicle management table with automatic renewal expiry badges (Warning / Expired).
+- [x] Verify vehicle CRUD and expiry indicators.
 
 ---
 
