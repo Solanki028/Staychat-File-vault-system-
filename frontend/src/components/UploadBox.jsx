@@ -1,5 +1,5 @@
-import { CloudUpload, FileUp } from 'lucide-react';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { CloudUpload, FileUp, Tag } from 'lucide-react';
 import ProgressBar from './ProgressBar.jsx';
 
 const maxFileSize = 25 * 1024 * 1024;
@@ -26,10 +26,12 @@ const allowedTypes = [
 ];
 
 const supportedFormats = ['Images', 'PDF', 'Docs', 'Excel', 'CSV', 'ZIP', 'JSON'];
+const categories = ['General', 'Legal', 'Financial', 'HR', 'Corporate', 'Tax'];
 
-function UploadBox({ onUpload, progress, isUploading, onNotify }) {
+export default function UploadBox({ onUpload, progress, isUploading, onNotify }) {
   const inputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('General');
 
   const validateAndUpload = (file) => {
     if (!file) return;
@@ -44,7 +46,7 @@ function UploadBox({ onUpload, progress, isUploading, onNotify }) {
       return;
     }
 
-    onUpload(file);
+    onUpload(file, selectedCategory);
   };
 
   const handleDrop = (event) => {
@@ -63,10 +65,10 @@ function UploadBox({ onUpload, progress, isUploading, onNotify }) {
       onDrop={handleDrop}
       className={`
         relative overflow-hidden rounded-2xl border-2 border-dashed
-        bg-white p-8 sm:p-12 transition-all duration-300
+        bg-slate-900/60 backdrop-blur-xl p-8 sm:p-10 transition-all duration-300
         ${isDragging
-          ? 'border-brand-400 bg-brand-50/30 scale-[1.01] shadow-glow'
-          : 'border-surface-300 hover:border-brand-300 hover:bg-surface-50'
+          ? 'border-indigo-400 bg-indigo-500/10 scale-[1.01]'
+          : 'border-slate-800 hover:border-slate-700'
         }
       `}
     >
@@ -77,48 +79,59 @@ function UploadBox({ onUpload, progress, isUploading, onNotify }) {
         onChange={(event) => validateAndUpload(event.target.files?.[0])}
       />
 
-      {/* Upload Content */}
       {!isUploading ? (
         <div className="flex flex-col items-center text-center">
           <div className={`
-            flex h-16 w-16 items-center justify-center rounded-2xl
+            flex h-14 w-14 items-center justify-center rounded-2xl
             transition-all duration-300
-            ${isDragging
-              ? 'bg-brand-500 text-white shadow-lg shadow-brand-200 scale-110'
-              : 'bg-surface-100 text-slate-400 group-hover:bg-brand-50'
-            }
+            ${isDragging ? 'bg-indigo-500 text-white scale-110' : 'bg-slate-800 text-slate-400'}
           `}>
-            <CloudUpload size={28} strokeWidth={1.5} />
+            <CloudUpload size={26} />
           </div>
 
-          <h2 className="mt-5 text-xl font-bold text-slate-800">
-            {isDragging ? 'Release to upload' : 'Drop your files here'}
+          <h2 className="mt-4 text-base font-bold text-white">
+            {isDragging ? 'Release to upload document' : 'Drop document into workspace'}
           </h2>
-          <p className="mt-2 text-sm text-slate-400 max-w-md">
-            or click the button below to browse. Supports up to 25MB per file.
+          <p className="mt-1 text-xs text-slate-400 max-w-md">
+            or click below to browse. Supports files up to 25MB.
           </p>
+
+          {/* Category Selector */}
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <Tag className="w-3 h-3 text-indigo-400" /> Category:
+            </span>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
 
           <button
             type="button"
             disabled={isUploading}
             onClick={() => inputRef.current?.click()}
             className="
-              mt-6 inline-flex items-center gap-2.5 rounded-xl
-              bg-brand-600 px-6 py-3 text-sm font-semibold text-white
-              shadow-soft hover:bg-brand-700 hover:shadow-card
-              active:scale-[0.97] disabled:opacity-50
-              transition-all duration-200
+              mt-5 inline-flex items-center gap-2 rounded-xl
+              bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white
+              shadow-lg shadow-indigo-600/25 hover:bg-indigo-500
+              active:scale-[0.98] disabled:opacity-50 transition-all
             "
           >
-            <FileUp size={16} />
-            Browse Files
+            <FileUp size={15} />
+            Browse File
           </button>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
             {supportedFormats.map((fmt) => (
               <span
                 key={fmt}
-                className="rounded-md bg-surface-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+                className="rounded-md bg-slate-800/60 border border-slate-700/50 px-2 py-0.5 text-[10px] font-medium text-slate-400"
               >
                 {fmt}
               </span>
@@ -126,16 +139,12 @@ function UploadBox({ onUpload, progress, isUploading, onNotify }) {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center py-4 animate-fade-in">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
-            <CloudUpload size={24} className="animate-pulse-slow" />
-          </div>
-          <p className="mt-4 mb-5 text-sm font-semibold text-slate-600">Uploading your file…</p>
+        <div className="flex flex-col items-center py-4">
+          <CloudUpload size={28} className="text-indigo-400 animate-pulse mb-3" />
+          <p className="text-xs font-semibold text-slate-300 mb-3">Uploading document to workspace vault…</p>
           <ProgressBar progress={progress} />
         </div>
       )}
     </section>
   );
 }
-
-export default UploadBox;

@@ -1,420 +1,220 @@
-import {
-  ArrowLeft,
-  Archive,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  FolderOpen,
-  Image as ImageIcon,
-  Search,
-  Star,
-  Trash2,
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { 
+  FolderOpen, 
+  Search, 
+  Star, 
+  Tag, 
+  Trash2, 
   X,
+  Plus
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import FileCard from '../components/FileCard.jsx';
-import Loader from '../components/Loader.jsx';
-import { deleteFile, fetchFiles, toggleFavorite } from '../services/api.js';
+import DocumentCard from '../components/DocumentCard';
+import UploadBox from '../components/UploadBox';
+import Loader from '../components/Loader';
+import { 
+  deleteDocumentAsync, 
+  fetchDocumentsAsync, 
+  toggleFavoriteAsync, 
+  uploadDocumentAsync 
+} from '../redux/slices/documentSlice';
 
-const FILES_PER_PAGE = 6;
+const CATEGORIES = ['All', 'Favorites', 'Legal', 'Financial', 'HR', 'Corporate', 'Tax', 'General'];
 
-/* ─── Filter Category Definitions ─── */
-const CATEGORIES = [
-  { key: 'all', label: 'All', icon: FolderOpen },
-  { key: 'favorites', label: 'Favorites', icon: Star },
-  { key: 'images', label: 'Images', icon: ImageIcon },
-  { key: 'documents', label: 'Documents', icon: FileText },
-  { key: 'archives', label: 'Archives', icon: Archive },
-];
+export default function AllFiles({ companyId: propCompanyId }) {
+  const { companyId: routeCompanyId } = useParams();
+  const companyId = propCompanyId || routeCompanyId;
 
-const matchCategory = (file, category) => {
-  switch (category) {
-    case 'favorites':
-      return file.isFavorite === true;
-    case 'images':
-      return file.fileType?.startsWith('image/');
-    case 'documents':
-      return (
-        file.fileType?.includes('pdf') ||
-        file.fileType?.includes('word') ||
-        file.fileType?.includes('msword') ||
-        file.fileType?.includes('text/') ||
-        file.fileType?.includes('json') ||
-        file.fileType?.includes('spreadsheet') ||
-        file.fileType?.includes('excel') ||
-        file.fileType?.includes('csv') ||
-        file.fileType?.includes('presentation') ||
-        file.fileType?.includes('powerpoint')
-      );
-    case 'archives':
-      return (
-        file.fileType?.includes('zip') ||
-        file.fileType?.includes('rar')
-      );
-    default:
-      return true;
-  }
-};
+  const dispatch = useDispatch();
+  const { list: documents, loading, pagination } = useSelector((state) => state.documents);
 
-function AllFiles() {
-  const [files, setFiles] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [toast, setToast] = useState(null);
-  const [fileToDelete, setFileToDelete] = useState(null);
-  const toastTimeoutRef = useRef(null);
+  const [docToDelete, setDocToDelete] = useState(null);
 
   const notify = (message, type = 'success') => {
     setToast({ message, type });
-    window.clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3500);
-  };
-
-  const loadFiles = async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await fetchFiles();
-      setFiles(data);
-    } catch (error) {
-      notify(error.response?.data?.message || 'Could not load files.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    setTimeout(() => setToast(null), 3500);
   };
 
   useEffect(() => {
-    loadFiles();
-    return () => window.clearTimeout(toastTimeoutRef.current);
-  }, []);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, activeCategory]);
-
-  // Count per category (for badges)
-  const categoryCounts = useMemo(() => {
-    const counts = {};
-    CATEGORIES.forEach((cat) => {
-      counts[cat.key] = files.filter((f) => matchCategory(f, cat.key)).length;
-    });
-    return counts;
-  }, [files]);
-
-  const filteredFiles = useMemo(() => {
-    let result = files;
-
-    // Category filter
-    if (activeCategory !== 'all') {
-      result = result.filter((f) => matchCategory(f, activeCategory));
-    }
-
-    // Search filter
-    const query = searchTerm.trim().toLowerCase();
-    if (query) {
-      result = result.filter((f) => f.originalName.toLowerCase().includes(query));
-    }
-
-    return result;
-  }, [files, searchTerm, activeCategory]);
-
-  const totalPages = Math.ceil(filteredFiles.length / FILES_PER_PAGE);
-  const startIdx = (currentPage - 1) * FILES_PER_PAGE;
-  const paginatedFiles = filteredFiles.slice(startIdx, startIdx + FILES_PER_PAGE);
-
-  const handleToggleFavorite = async (id) => {
-    try {
-      const { data } = await toggleFavorite(id);
-      setFiles((curr) =>
-        curr.map((f) => (f._id === id ? data.file : f))
+    if (companyId) {
+      dispatch(
+        fetchDocumentsAsync({
+          companyId,
+          params: {
+            category: activeCategory !== 'Favorites' ? activeCategory : undefined,
+            isFavorite: activeCategory === 'Favorites' ? true : undefined,
+            search: searchTerm
+          }
+        })
       );
-    } catch {
-      notify('Could not update favorite.', 'error');
     }
+  }, [dispatch, companyId, activeCategory, searchTerm]);
+
+  const handleUpload = async (file, category) => {
+    if (!companyId) {
+      notify('Please select a company workspace before uploading documents.', 'error');
+      return;
+    }
+
+    setIsUploading(true);
+    setProgress(0);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('companyId', companyId);
+    formData.append('category', category);
+
+    const result = await dispatch(
+      uploadDocumentAsync({
+        formData,
+        onProgress: (event) => {
+          const percent = Math.round((event.loaded * 100) / event.total);
+          setProgress(percent);
+        }
+      })
+    );
+
+    setIsUploading(false);
+    setProgress(0);
+
+    if (uploadDocumentAsync.fulfilled.match(result)) {
+      notify('Document uploaded to workspace successfully.');
+    } else {
+      notify(result.payload || 'Failed to upload document.', 'error');
+    }
+  };
+
+  const handleToggleFavorite = async (documentId) => {
+    await dispatch(toggleFavoriteAsync(documentId));
   };
 
   const confirmDelete = async () => {
-    if (!fileToDelete) return;
-    try {
-      await deleteFile(fileToDelete._id);
-      setFiles((curr) => curr.filter((f) => f._id !== fileToDelete._id));
-      notify('File deleted successfully.');
-    } catch (error) {
-      notify(error.response?.data?.message || 'Delete failed. Please try again.', 'error');
-    } finally {
-      setFileToDelete(null);
-    }
-  };
-
-  const goToPage = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    if (!docToDelete) return;
+    const result = await dispatch(deleteDocumentAsync(docToDelete._id));
+    if (deleteDocumentAsync.fulfilled.match(result)) {
+      notify('Document soft-deleted from workspace.');
     } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push('...');
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push('...');
-      pages.push(totalPages);
+      notify(result.payload || 'Failed to delete document.', 'error');
     }
-    return pages;
+    setDocToDelete(null);
   };
 
   return (
-    <main className="min-h-screen">
-      {/* Ambient Background */}
-      <div className="ambient-bg">
-        <div className="ambient-orb" />
-        <div className="ambient-orb" />
-        <div className="ambient-orb" />
+    <div className="space-y-6">
+      {/* Upload Container */}
+      <UploadBox
+        onUpload={handleUpload}
+        progress={progress}
+        isUploading={isUploading}
+        onNotify={notify}
+      />
+
+      {/* Header & Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-slate-800">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-none">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeCategory === cat
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              {cat === 'Favorites' && <Star className="w-3 h-3 inline mr-1 text-amber-400" fill="currentColor" />}
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-64">
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+          <input
+            type="text"
+            placeholder="Search documents..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+          />
+        </div>
       </div>
-      <div className="noise-overlay" />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-
-        {/* ─── Back Link ─── */}
-        <Link
-          to="/"
-          className="mb-8 inline-flex items-center gap-2 rounded-lg text-sm font-medium text-slate-400 hover:text-brand-600 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </Link>
-
-        {/* ─── Page Header ─── */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl tracking-tight">
-              All Files
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              {filteredFiles.length} {filteredFiles.length === 1 ? 'file' : 'files'}
-              {searchTerm && ` matching "${searchTerm}"`}
-              {activeCategory !== 'all' && ` in ${activeCategory}`}
-            </p>
-          </div>
-
-          {/* Search */}
-          <div className="relative w-full sm:max-w-xs">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300"
-              size={16}
-            />
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search files…"
-              className="
-                w-full rounded-xl border border-surface-200 bg-white
-                py-2.5 pl-10 pr-4 text-sm text-slate-700
-                outline-none transition-all duration-200
-                placeholder:text-slate-300
-                focus:border-brand-300 focus:ring-2 focus:ring-brand-100
-              "
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-300 hover:text-slate-500 hover:bg-surface-100 transition-colors"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* ─── Filter Tabs ─── */}
-        <div className="mb-8 flex flex-wrap gap-2">
-          {CATEGORIES.map(({ key, label, icon: Icon }) => {
-            const isActive = activeCategory === key;
-            const count = categoryCounts[key] || 0;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveCategory(key)}
-                className={`
-                  inline-flex items-center gap-2 rounded-xl px-4 py-2.5
-                  text-sm font-semibold transition-all duration-200
-                  ${isActive
-                    ? 'bg-brand-600 text-white shadow-sm shadow-brand-200'
-                    : 'border border-surface-200 bg-white text-slate-500 hover:bg-surface-50 hover:text-slate-700 hover:border-surface-300 shadow-soft'
-                  }
-                `}
-              >
-                <Icon size={15} fill={key === 'favorites' && isActive ? 'currentColor' : 'none'} />
-                {label}
-                <span className={`
-                  rounded-md px-1.5 py-0.5 text-[10px] font-bold
-                  ${isActive
-                    ? 'bg-white/20 text-white'
-                    : 'bg-surface-100 text-slate-400'
-                  }
-                `}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ─── File Grid ─── */}
-        {isLoading ? (
+      {/* Document Grid */}
+      {loading ? (
+        <div className="py-12 flex justify-center">
           <Loader />
-        ) : paginatedFiles.length > 0 ? (
-          <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {paginatedFiles.map((file) => (
-                <FileCard
-                  key={file._id}
-                  file={file}
-                  onDelete={setFileToDelete}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              ))}
-            </div>
+        </div>
+      ) : documents.length > 0 ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {documents.map((doc) => (
+            <DocumentCard
+              key={doc._id}
+              doc={doc}
+              onDelete={setDocToDelete}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="p-12 text-center border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
+          <FolderOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+          <h3 className="text-base font-semibold text-white">No Documents Found</h3>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+            {searchTerm ? 'No documents match your search criteria.' : 'Upload your first document to this workspace vault.'}
+          </p>
+        </div>
+      )}
 
-            {/* ─── Pagination ─── */}
-            {totalPages > 1 && (
-              <div className="mt-10">
-                <nav className="flex items-center justify-center gap-1.5">
-                  <button
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-surface-200 bg-white text-slate-400 hover:bg-surface-50 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-soft"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-
-                  {getPageNumbers().map((page, idx) =>
-                    page === '...' ? (
-                      <span key={`dots-${idx}`} className="px-2 text-sm text-slate-300">…</span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => goToPage(page)}
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-semibold transition-all duration-200 shadow-soft ${
-                          currentPage === page
-                            ? 'bg-brand-600 text-white border border-brand-600 shadow-sm shadow-brand-200'
-                            : 'border border-surface-200 bg-white text-slate-600 hover:bg-surface-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-
-                  <button
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-surface-200 bg-white text-slate-400 hover:bg-surface-50 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-soft"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </nav>
-
-                <p className="mt-3 text-center text-xs text-slate-400">
-                  Showing {startIdx + 1}–{Math.min(startIdx + FILES_PER_PAGE, filteredFiles.length)} of {filteredFiles.length}
-                </p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="rounded-2xl border-2 border-dashed border-surface-300 bg-white/50 py-20 text-center animate-fade-in">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-100 text-slate-300">
-              {activeCategory === 'favorites' ? <Star size={24} /> : <FolderOpen size={24} />}
-            </div>
-            <h3 className="mt-5 text-lg font-bold text-slate-700">
-              {searchTerm
-                ? 'No files match your search'
-                : activeCategory === 'favorites'
-                ? 'No favorites yet'
-                : `No ${activeCategory} found`}
-            </h3>
-            <p className="mt-1.5 text-sm text-slate-400 max-w-sm mx-auto">
-              {searchTerm
-                ? 'Try a different keyword or filter.'
-                : activeCategory === 'favorites'
-                ? 'Star a file to pin it as a favorite.'
-                : 'Try a different category or upload more files.'}
-            </p>
-            {!searchTerm && activeCategory !== 'all' && (
-              <button
-                onClick={() => setActiveCategory('all')}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-brand-700 transition-colors"
-              >
-                Show All Files
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ─── Toast ─── */}
+      {/* Toast Alert */}
       {toast && (
         <div
-          className={`
-            fixed bottom-6 right-6 z-50 flex items-center gap-3
-            rounded-xl border px-5 py-3.5 text-sm font-medium
-            shadow-elevated backdrop-blur-sm animate-slide-up
-            ${toast.type === 'error'
-              ? 'border-red-100 bg-white text-red-600'
-              : 'border-emerald-100 bg-white text-emerald-600'
-            }
-          `}
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium backdrop-blur-md shadow-2xl ${
+            toast.type === 'error'
+              ? 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+          }`}
         >
-          <div className={`flex h-6 w-6 items-center justify-center rounded-full ${
-            toast.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'
-          }`}>
-            {toast.type === 'error' ? <X size={12} /> : <Check size={12} />}
-          </div>
           {toast.message}
         </div>
       )}
 
-      {/* ─── Delete Modal ─── */}
-      {fileToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4 animate-fade-in">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-elevated animate-scale-in">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500 mx-auto">
-              <Trash2 size={20} />
+      {/* Delete Confirmation Modal */}
+      {docToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3">
+              <Trash2 className="w-5 h-5" />
             </div>
-            <h3 className="mt-4 text-center text-lg font-bold text-slate-800">Delete this file?</h3>
-            <p className="mt-2 text-center text-sm text-slate-400 leading-relaxed">
-              <span className="font-medium text-slate-600">{fileToDelete.originalName}</span> will be permanently removed.
+            <h3 className="text-base font-bold text-white text-center">Delete Document?</h3>
+            <p className="text-xs text-slate-400 text-center mt-1">
+              Are you sure you want to delete <span className="text-white font-semibold">{docToDelete.originalName || docToDelete.title}</span>?
             </p>
-            <div className="mt-6 flex gap-3">
+
+            <div className="flex gap-3 mt-6">
               <button
-                type="button"
-                onClick={() => setFileToDelete(null)}
-                className="flex-1 rounded-xl border border-surface-200 bg-white py-2.5 text-sm font-semibold text-slate-600 hover:bg-surface-50 transition-colors"
+                onClick={() => setDocToDelete(null)}
+                className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium"
               >
                 Cancel
               </button>
               <button
-                type="button"
                 onClick={confirmDelete}
-                className="flex-1 rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white hover:bg-red-600 active:scale-[0.97] transition-all shadow-sm shadow-red-200"
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-medium"
               >
-                Delete
+                Delete Document
               </button>
             </div>
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
-
-export default AllFiles;
