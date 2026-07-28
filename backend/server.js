@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { errorMiddleware, notFoundHandler } from './middlewares/errorMiddleware.js';
 import authRoutes from './routes/authRoutes.js';
+import companyRoutes from './routes/companyRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 
 dotenv.config();
@@ -52,6 +54,10 @@ app.get('/health', (_req, res) => {
 // API v1 Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/auth', authRoutes); // Alias fallback
+app.use('/api/v1/companies', companyRoutes);
+app.use('/api/companies', companyRoutes); // Alias fallback
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/dashboard', dashboardRoutes); // Alias fallback
 
 // Existing file routes
 app.use('/files', fileRoutes);
