@@ -125,11 +125,11 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 13: Security Hardening & Performance Optimization
-- [ ] Integrate Helmet HTTP security headers and CORS strict domain configuration.
-- [ ] Implement Express Rate Limiter (`express-rate-limit`) on API and Auth routes.
-- [ ] Apply Mongo injection sanitization and Express Validator input schemas.
-- [ ] Optimize frontend bundle splitting, image lazy loading, and React memoization.
-- [ ] Verify security rules and load responsiveness.
+- [x] Integrate Helmet HTTP security headers and CORS strict domain configuration.
+- [x] Implement Express Rate Limiter (`express-rate-limit`) on API and Auth routes.
+- [x] Apply Mongo injection sanitization and Express Validator input schemas.
+- [x] Optimize frontend bundle splitting, image lazy loading, and React memoization.
+- [x] Verify security rules and load responsiveness.
 
 ---
 
