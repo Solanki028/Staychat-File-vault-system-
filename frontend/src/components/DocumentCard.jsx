@@ -41,7 +41,9 @@ export default function DocumentCard({ doc, onDelete, onToggleFavorite }) {
 
   const isImage = (doc.mimeType || doc.fileType)?.startsWith('image/');
   const isPdf = (doc.mimeType || doc.fileType) === 'application/pdf';
-  const previewUrl = doc.previewUrl ? `${API_BASE_URL}${doc.previewUrl}` : (doc.fileUrl || '');
+  
+  const rawPreview = doc.previewUrl || doc.fileUrl || '';
+  const previewUrl = rawPreview.startsWith('http') ? rawPreview : `${API_BASE_URL}${rawPreview}`;
 
   return (
     <>

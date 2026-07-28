@@ -1,6 +1,7 @@
 import path from 'path';
 import documentRepository from '../repositories/DocumentRepository.js';
 import companyRepository from '../repositories/CompanyRepository.js';
+import cloudinaryService from './CloudinaryService.js';
 
 class DocumentService {
   async getCompanyDocuments(companyId, query, userId, role) {
@@ -41,6 +42,15 @@ class DocumentService {
 
     const extension = path.extname(file.originalname).toLowerCase().replace('.', '');
 
+    // Upload file to Cloudinary cloud storage
+    let cloudResult;
+    try {
+      cloudResult = await cloudinaryService.uploadFile(file.path, `staychat_vault/${companyId}`);
+    } catch (err) {
+      // Fallback to local storage path if Cloudinary fails
+      cloudResult = { secureUrl: `/uploads/${file.filename}`, publicId: file.path };
+    }
+
     const docPayload = {
       companyId,
       uploadedBy: userId,
@@ -49,12 +59,12 @@ class DocumentService {
       title: file.originalname,
       category,
       originalName: file.originalname,
-      storageName: file.filename,
+      storageName: cloudResult.publicId || file.filename,
       mimeType: file.mimetype,
       extension,
-      size: file.size,
-      storagePath: file.path,
-      previewUrl: `/uploads/${file.filename}`,
+      size: cloudResult.bytes || file.size,
+      storagePath: cloudResult.secureUrl || file.path,
+      previewUrl: cloudResult.secureUrl || `/uploads/${file.filename}`,
       description: description || null,
       expiryDate: expiryDate ? new Date(expiryDate) : null
     };
@@ -77,14 +87,21 @@ class DocumentService {
     const existingDoc = await this.getDocumentById(documentId);
     const extension = path.extname(file.originalname).toLowerCase().replace('.', '');
 
+    let cloudResult;
+    try {
+      cloudResult = await cloudinaryService.uploadFile(file.path, `staychat_vault/${existingDoc.companyId}`);
+    } catch (err) {
+      cloudResult = { secureUrl: `/uploads/${file.filename}`, publicId: file.path };
+    }
+
     const updatePayload = {
       originalName: file.originalname,
-      storageName: file.filename,
+      storageName: cloudResult.publicId || file.filename,
       mimeType: file.mimetype,
       extension,
-      size: file.size,
-      storagePath: file.path,
-      previewUrl: `/uploads/${file.filename}`,
+      size: cloudResult.bytes || file.size,
+      storagePath: cloudResult.secureUrl || file.path,
+      previewUrl: cloudResult.secureUrl || `/uploads/${file.filename}`,
       version: existingDoc.version + 1,
       updatedBy: userId
     };
@@ -93,7 +110,10 @@ class DocumentService {
   }
 
   async deleteDocument(documentId, userId) {
-    await this.getDocumentById(documentId);
+    const doc = await this.getDocumentById(documentId);
+    if (doc.storageName) {
+      await cloudinaryService.deleteFile(doc.storageName);
+    }
     return await documentRepository.softDelete(documentId, userId);
   }
 
