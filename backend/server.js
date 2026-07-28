@@ -1,12 +1,14 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import mongoSanitize from 'express-mongo-sanitize';
 import fs from 'fs';
 import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { errorMiddleware, notFoundHandler } from './middlewares/errorMiddleware.js';
+import { apiRateLimiter, authRateLimiter } from './middlewares/rateLimiter.js';
 import auditLogRoutes from './routes/auditLogRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import bankRoutes from './routes/bankRoutes.js';
@@ -35,7 +37,23 @@ if (!fs.existsSync(uploadsDir)) {
 
 await connectDB();
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+// Security Hardening Middlewares
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'http:', 'https:'],
+        connectSrc: ["'self'", 'http:', 'https:']
+      }
+    }
+  })
+);
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL || true,
@@ -43,8 +61,13 @@ app.use(
     credentials: true
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// NoSQL Query Injection Sanitization
+app.use(mongoSanitize());
+
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/', (_req, res) => {
@@ -60,9 +83,12 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, status: 'ok', service: 'company-workspace-api' });
 });
 
+// Apply Global API Rate Limiter
+app.use('/api', apiRateLimiter);
+
 // API v1 Routes
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/auth', authRoutes); // Alias fallback
+app.use('/api/v1/auth', authRateLimiter, authRoutes);
+app.use('/api/auth', authRateLimiter, authRoutes); // Alias fallback
 app.use('/api/v1/companies', companyRoutes);
 app.use('/api/companies', companyRoutes); // Alias fallback
 app.use('/api/v1/dashboard', dashboardRoutes);
