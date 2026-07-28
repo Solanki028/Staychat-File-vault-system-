@@ -91,10 +91,10 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 9: Banking Module & Attachments
-- [ ] Create `BankAccount` model with IBAN/Swift fields and document attachment pointers.
-- [ ] Implement `BankRepository`, `BankService`, `BankController`, and `/api/v1/bank` endpoints.
-- [ ] Build frontend Banking view with bank account cards and verification statement attachments.
-- [ ] Verify banking record CRUD and file attachment linking.
+- [x] Create `BankAccount` model with IBAN/Swift fields and document attachment pointers.
+- [x] Implement `BankRepository`, `BankService`, `BankController`, and `/api/v1/bank` endpoints.
+- [x] Build frontend Banking view with bank account cards and verification statement attachments.
+- [x] Verify banking record CRUD and file attachment linking.
 
 ---
 
