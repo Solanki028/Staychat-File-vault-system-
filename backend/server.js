@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { errorMiddleware, notFoundHandler } from './middlewares/errorMiddleware.js';
 import authRoutes from './routes/authRoutes.js';
+import bankRoutes from './routes/bankRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
@@ -70,6 +71,8 @@ app.use('/api/v1/partners', partnerRoutes);
 app.use('/api/partners', partnerRoutes); // Alias fallback
 app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/vehicles', vehicleRoutes); // Alias fallback
+app.use('/api/v1/bank', bankRoutes);
+app.use('/api/bank', bankRoutes); // Alias fallback
 
 // Existing file routes
 app.use('/files', fileRoutes);
