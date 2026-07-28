@@ -4,6 +4,7 @@ import bankReducer from './slices/bankSlice';
 import companyReducer from './slices/companySlice';
 import documentReducer from './slices/documentSlice';
 import employeeReducer from './slices/employeeSlice';
+import invoiceReducer from './slices/invoiceSlice';
 import partnerReducer from './slices/partnerSlice';
 import vehicleReducer from './slices/vehicleSlice';
 import uiReducer from './slices/uiSlice';
@@ -15,6 +16,7 @@ export const store = configureStore({
     companies: companyReducer,
     documents: documentReducer,
     employees: employeeReducer,
+    invoices: invoiceReducer,
     partners: partnerReducer,
     vehicles: vehicleReducer,
     ui: uiReducer
