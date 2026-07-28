@@ -31,11 +31,11 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 2: Authentication & Role Management Engine
-- [ ] Create `User` model inheriting Base Schema with bcrypt password hashing.
-- [ ] Implement `UserRepository`, `UserService`, `AuthController`, and `/api/v1/auth` routes (`register`, `login`, `logout`, `me`).
-- [ ] Build `authenticateJWT` and RBAC permission check middlewares (`checkRole`).
-- [ ] Build frontend `authSlice`, `api/authApi.js`, `Login.jsx`, `Register.jsx`, and `ProtectedRoute.jsx` route guard.
-- [ ] Verify authentication flow end-to-end.
+- [x] Create `User` model inheriting Base Schema with bcrypt password hashing.
+- [x] Implement `UserRepository`, `UserService`, `AuthController`, and `/api/v1/auth` routes (`register`, `login`, `logout`, `me`).
+- [x] Build `authenticateJWT` and RBAC permission check middlewares (`checkRole`).
+- [x] Build frontend `authSlice`, `api/authApi.js`, `Login.jsx`, `Register.jsx`, and `ProtectedRoute.jsx` route guard.
+- [x] Verify authentication flow end-to-end.
 
 ---
 
