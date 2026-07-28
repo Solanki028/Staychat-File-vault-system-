@@ -117,10 +117,10 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 12: Debounced Global Search Engine
-- [ ] Implement `SearchService` and `SearchController` (`GET /api/v1/search?keyword=...&companyId=...`).
-- [ ] Build MongoDB text indexes on Companies, Documents, Employees, Vehicles, and Partners.
-- [ ] Build frontend debounced global search bar in header with instant modal results.
-- [ ] Verify search execution under 200ms across all workspace entities.
+- [x] Implement `SearchService` and `SearchController` (`GET /api/v1/search?keyword=...&companyId=...`).
+- [x] Build MongoDB text indexes on Companies, Documents, Employees, Vehicles, and Partners.
+- [x] Build frontend debounced global search bar in header with instant modal results.
+- [x] Verify search execution under 200ms across all workspace entities.
 
 ---
 
