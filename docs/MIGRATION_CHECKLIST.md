@@ -57,12 +57,12 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 5: Documents Module Transformation
-- [ ] Refactor existing file storage logic into workspace-scoped `Document` model (`companyId`, `category`, `version`, `storagePath`).
-- [ ] Implement `DocumentRepository`, `DocumentService`, `DocumentController`, and `/api/v1/documents` endpoints.
-- [ ] Upgrade Multer storage engine into `uploadMiddleware.js` supporting 25MB limits & MIME validation.
-- [ ] Upgrade frontend `FileCard.jsx` to `DocumentCard.jsx` with workspace category badges, previews, downloads, and replacement.
-- [ ] Upgrade `UploadBox.jsx` to inject `companyId` context during uploads.
-- [ ] Verify workspace-isolated document upload, preview, download, and soft delete.
+- [x] Refactor existing file storage logic into workspace-scoped `Document` model (`companyId`, `category`, `version`, `storagePath`).
+- [x] Implement `DocumentRepository`, `DocumentService`, `DocumentController`, and `/api/v1/documents` endpoints.
+- [x] Upgrade Multer storage engine into `uploadMiddleware.js` supporting 25MB limits & MIME validation.
+- [x] Upgrade frontend `FileCard.jsx` to `DocumentCard.jsx` with workspace category badges, previews, downloads, and replacement.
+- [x] Upgrade `UploadBox.jsx` to inject `companyId` context during uploads.
+- [x] Verify workspace-isolated document upload, preview, download, and soft delete.
 
 ---
 
