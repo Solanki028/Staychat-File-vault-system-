@@ -14,6 +14,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import employeeRoutes from './routes/employeeRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
+import vehicleRoutes from './routes/vehicleRoutes.js';
 
 dotenv.config();
 
@@ -67,6 +68,8 @@ app.use('/api/v1/employees', employeeRoutes);
 app.use('/api/employees', employeeRoutes); // Alias fallback
 app.use('/api/v1/partners', partnerRoutes);
 app.use('/api/partners', partnerRoutes); // Alias fallback
+app.use('/api/v1/vehicles', vehicleRoutes);
+app.use('/api/vehicles', vehicleRoutes); // Alias fallback
 
 // Existing file routes
 app.use('/files', fileRoutes);
