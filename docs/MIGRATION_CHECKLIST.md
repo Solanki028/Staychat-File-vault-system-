@@ -67,10 +67,10 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 6: Employee Management Module
-- [ ] Create `Employee` model with unique compound index `{ companyId: 1, email: 1 }`.
-- [ ] Implement `EmployeeRepository`, `EmployeeService`, `EmployeeController`, and `/api/v1/employees` CRUD endpoints.
-- [ ] Build frontend Employee directory table with search, designation filters, and Add/Edit employee modal.
-- [ ] Verify employee CRUD operations and workspace scoping.
+- [x] Create `Employee` model with unique compound index `{ companyId: 1, email: 1 }`.
+- [x] Implement `EmployeeRepository`, `EmployeeService`, `EmployeeController`, and `/api/v1/employees` CRUD endpoints.
+- [x] Build frontend Employee directory table with search, designation filters, and Add/Edit employee modal.
+- [x] Verify employee CRUD operations and workspace scoping.
 
 ---
 
