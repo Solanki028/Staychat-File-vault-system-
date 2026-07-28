@@ -1,312 +1,244 @@
-import {
-  ArrowRight,
-  Check,
-  FolderOpen,
-  HardDrive,
-  Image as ImageIcon,
-  Star,
-  Trash2,
-  X,
-} from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import FileCard from '../components/FileCard.jsx';
-import Loader from '../components/Loader.jsx';
-import UploadBox from '../components/UploadBox.jsx';
-import { deleteFile, fetchFiles, toggleFavorite, uploadFile } from '../services/api.js';
+import { 
+  Building2, 
+  FileText, 
+  AlertTriangle, 
+  Users, 
+  Plus, 
+  ArrowRight, 
+  Trash2, 
+  ExternalLink,
+  ShieldCheck,
+  Search
+} from 'lucide-react';
+import AddCompanyModal from '../components/AddCompanyModal';
+import DashboardLayout from '../layouts/DashboardLayout';
+import Loader from '../components/Loader';
+import { deleteCompanyAsync, fetchCompaniesAsync } from '../redux/slices/companySlice';
 
-const RECENT_COUNT = 3;
-
-function Home() {
-  const [files, setFiles] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [toast, setToast] = useState(null);
-  const [fileToDelete, setFileToDelete] = useState(null);
-  const toastTimeoutRef = useRef(null);
-
-  const notify = (message, type = 'success') => {
-    setToast({ message, type });
-    window.clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 3500);
-  };
-
-  const loadFiles = async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await fetchFiles();
-      setFiles(data);
-    } catch (error) {
-      notify(error.response?.data?.message || 'Could not load files.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export default function Home() {
+  const dispatch = useDispatch();
+  const { list: companies, loading, pagination } = useSelector((state) => state.companies);
+  const { user } = useSelector((state) => state.auth);
+  
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [companyToDelete, setCompanyToDelete] = useState(null);
 
   useEffect(() => {
-    loadFiles();
-    return () => window.clearTimeout(toastTimeoutRef.current);
-  }, []);
+    dispatch(fetchCompaniesAsync({ search: searchQuery }));
+  }, [dispatch, searchQuery]);
 
-  const pinnedFiles = useMemo(() => files.filter((f) => f.isFavorite), [files]);
-  const recentFiles = useMemo(() => files.slice(0, RECENT_COUNT), [files]);
-
-  const imageCount = useMemo(
-    () => files.filter((f) => f.fileType?.startsWith('image/')).length,
-    [files]
-  );
-
-  const totalSize = useMemo(
-    () => files.reduce((acc, f) => acc + (f.fileSize || 0), 0),
-    [files]
-  );
-
-  const formatTotalSize = (bytes) => {
-    if (!bytes) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / 1024 ** i).toFixed(1)} ${units[i]}`;
-  };
-
-  const handleUpload = async (file) => {
-    setIsUploading(true);
-    setProgress(0);
-    try {
-      const { data } = await uploadFile(file, (event) => {
-        const percent = Math.round((event.loaded * 100) / event.total);
-        setProgress((prev) => Math.max(prev, percent));
-      });
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setFiles((curr) => [data.file, ...curr]);
-      notify('File uploaded successfully.');
-    } catch (error) {
-      notify(error.response?.data?.message || 'Upload failed. Please try again.', 'error');
-    } finally {
-      setIsUploading(false);
-      setTimeout(() => setProgress(0), 300);
-    }
-  };
-
-  const handleToggleFavorite = async (id) => {
-    try {
-      const { data } = await toggleFavorite(id);
-      setFiles((curr) =>
-        curr.map((f) => (f._id === id ? data.file : f))
-      );
-    } catch {
-      notify('Could not update favorite.', 'error');
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!fileToDelete) return;
-    try {
-      await deleteFile(fileToDelete._id);
-      setFiles((curr) => curr.filter((f) => f._id !== fileToDelete._id));
-      notify('File deleted successfully.');
-    } catch (error) {
-      notify(error.response?.data?.message || 'Delete failed. Please try again.', 'error');
-    } finally {
-      setFileToDelete(null);
-    }
+  const handleDeleteCompany = async () => {
+    if (!companyToDelete) return;
+    await dispatch(deleteCompanyAsync(companyToDelete._id));
+    setCompanyToDelete(null);
   };
 
   return (
-    <main className="min-h-screen">
-      {/* Ambient Background */}
-      <div className="ambient-bg">
-        <div className="ambient-orb" />
-        <div className="ambient-orb" />
-        <div className="ambient-orb" />
-      </div>
-      <div className="noise-overlay" />
-
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-
-        {/* ─── Header ─── */}
-        <header className="mb-10">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-brand-500 mb-2">Secure Storage</p>
-              <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl tracking-tight">
-                Staychat Vault
-              </h1>
-              <p className="mt-2 text-sm text-slate-400 max-w-md">
-                Upload, preview and manage your files in one beautiful workspace.
-              </p>
-            </div>
-
-            {/* Stats */}
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-3 rounded-xl border border-surface-200 bg-white px-4 py-3 shadow-soft">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-500">
-                  <FolderOpen size={16} />
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-800 leading-none">{files.length}</p>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mt-0.5">Files</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-surface-200 bg-white px-4 py-3 shadow-soft">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500">
-                  <ImageIcon size={16} />
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-800 leading-none">{imageCount}</p>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mt-0.5">Images</p>
-                </div>
-              </div>
-              <div className="hidden sm:flex items-center gap-3 rounded-xl border border-surface-200 bg-white px-4 py-3 shadow-soft">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
-                  <HardDrive size={16} />
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-800 leading-none">{formatTotalSize(totalSize)}</p>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mt-0.5">Used</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* ─── Upload ─── */}
-        <UploadBox
-          onUpload={handleUpload}
-          progress={progress}
-          isUploading={isUploading}
-          onNotify={notify}
-        />
-
-        {/* ─── Pinned / Favorites Section ─── */}
-        {!isLoading && pinnedFiles.length > 0 && (
-          <section className="mt-10">
-            <div className="mb-5 flex items-center gap-2">
-              <Star size={16} className="text-amber-400" fill="currentColor" />
-              <h2 className="text-lg font-bold text-slate-800">Pinned Files</h2>
-              <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-600">
-                {pinnedFiles.length}
-              </span>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {pinnedFiles.map((file) => (
-                <FileCard
-                  key={file._id}
-                  file={file}
-                  onDelete={setFileToDelete}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ─── Recent Files ─── */}
-        <section className="mt-10">
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Recent Uploads</h2>
-              <p className="text-sm text-slate-400 mt-0.5">Your latest files.</p>
-            </div>
-
-            {files.length > RECENT_COUNT && (
-              <Link
-                to="/files"
-                className="
-                  inline-flex items-center gap-1.5 rounded-xl
-                  border border-surface-200 bg-white px-4 py-2.5
-                  text-sm font-semibold text-brand-600
-                  shadow-soft hover:shadow-card hover:border-brand-200
-                  transition-all duration-200
-                "
-              >
-                View All ({files.length})
-                <ArrowRight size={14} />
-              </Link>
-            )}
-          </div>
-
-          {isLoading ? (
-            <Loader />
-          ) : recentFiles.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {recentFiles.map((file) => (
-                <FileCard
-                  key={file._id}
-                  file={file}
-                  onDelete={setFileToDelete}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border-2 border-dashed border-surface-300 bg-white/50 py-16 text-center animate-fade-in">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-100 text-slate-300">
-                <FolderOpen size={24} />
-              </div>
-              <h3 className="mt-5 text-lg font-bold text-slate-700">Your vault is empty</h3>
-              <p className="mt-1.5 text-sm text-slate-400 max-w-sm mx-auto">
-                Upload your first file to get started.
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
-
-      {/* ─── Toast ─── */}
-      {toast && (
-        <div
-          className={`
-            fixed bottom-6 right-6 z-50 flex items-center gap-3
-            rounded-xl border px-5 py-3.5 text-sm font-medium
-            shadow-elevated backdrop-blur-sm animate-slide-up
-            ${toast.type === 'error'
-              ? 'border-red-100 bg-white text-red-600'
-              : 'border-emerald-100 bg-white text-emerald-600'
-            }
-          `}
-        >
-          <div className={`flex h-6 w-6 items-center justify-center rounded-full ${
-            toast.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'
-          }`}>
-            {toast.type === 'error' ? <X size={12} /> : <Check size={12} />}
-          </div>
-          {toast.message}
+    <DashboardLayout>
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Welcome back, {user?.fullName || 'Business Owner'}
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Manage your organizations, company workspaces, and secure document vaults.
+          </p>
         </div>
-      )}
 
-      {/* ─── Delete Modal ─── */}
-      {fileToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4 animate-fade-in">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-elevated animate-scale-in">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500 mx-auto">
-              <Trash2 size={20} />
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-xs font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Company</span>
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-slate-400 font-medium">Total Companies</span>
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <Building2 className="w-4 h-4" />
             </div>
-            <h3 className="mt-4 text-center text-lg font-bold text-slate-800">Delete this file?</h3>
-            <p className="mt-2 text-center text-sm text-slate-400 leading-relaxed">
-              <span className="font-medium text-slate-600">{fileToDelete.originalName}</span> will be permanently removed.
+          </div>
+          <p className="text-xl font-bold text-white">{pagination.totalItems || companies.length}</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-slate-400 font-medium">Total Documents</span>
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+              <FileText className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xl font-bold text-white">--</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-slate-400 font-medium">Expiring Licenses</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xl font-bold text-amber-400">0</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-slate-400 font-medium">Active Employees</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xl font-bold text-white">--</p>
+        </div>
+      </div>
+
+      {/* Companies Grid Section */}
+      <section>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-white">Company Workspaces</h2>
+            <p className="text-xs text-slate-400">Select a company to open its isolated operational workspace.</p>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
+            <input
+              type="text"
+              placeholder="Search companies..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="py-12 flex justify-center">
+            <Loader />
+          </div>
+        ) : companies.length > 0 ? (
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {companies.map((company) => (
+              <div
+                key={company._id}
+                className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 backdrop-blur-xl transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500/20 to-cyan-500/20 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-400 text-sm">
+                        {company.companyName.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-sm text-white group-hover:text-indigo-300 transition-colors">
+                          {company.companyName}
+                        </h3>
+                        <p className="text-[11px] text-slate-400">{company.industry}</p>
+                      </div>
+                    </div>
+
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      Active
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-400 my-4 border-t border-b border-slate-800/60 py-3">
+                    <div className="flex justify-between">
+                      <span>Reg No:</span>
+                      <span className="font-mono text-slate-200">{company.registrationNumber}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Email:</span>
+                      <span className="text-slate-200">{company.contact?.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Location:</span>
+                      <span className="text-slate-200">{company.address?.city}, {company.address?.country}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Link
+                    to={`/workspace/${company._id}`}
+                    className="flex-1 py-2 px-3 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <span>Open Workspace</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+
+                  <button
+                    onClick={() => setCompanyToDelete(company)}
+                    className="p-2 bg-slate-800/60 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700/50 hover:border-rose-500/30 rounded-lg transition-colors"
+                    title="Delete Company"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-12 text-center border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
+            <Building2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-white">No Companies Found</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              Create your first company workspace to start managing documents, employees, vehicles, and invoices.
             </p>
-            <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Company</span>
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* Add Company Modal */}
+      <AddCompanyModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+
+      {/* Delete Confirmation Modal */}
+      {companyToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-white text-center">Delete Company Workspace?</h3>
+            <p className="text-xs text-slate-400 text-center mt-1">
+              Are you sure you want to delete <span className="text-white font-semibold">{companyToDelete.companyName}</span>? This action soft-deletes the workspace.
+            </p>
+
+            <div className="flex gap-3 mt-6">
               <button
-                type="button"
-                onClick={() => setFileToDelete(null)}
-                className="flex-1 rounded-xl border border-surface-200 bg-white py-2.5 text-sm font-semibold text-slate-600 hover:bg-surface-50 transition-colors"
+                onClick={() => setCompanyToDelete(null)}
+                className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium"
               >
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={confirmDelete}
-                className="flex-1 rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white hover:bg-red-600 active:scale-[0.97] transition-all shadow-sm shadow-red-200"
+                onClick={handleDeleteCompany}
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-medium"
               >
-                Delete
+                Delete Company
               </button>
             </div>
           </div>
         </div>
       )}
-    </main>
+    </DashboardLayout>
   );
 }
-
-export default Home;

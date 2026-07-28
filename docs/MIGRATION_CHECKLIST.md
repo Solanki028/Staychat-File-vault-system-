@@ -40,11 +40,11 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 3: Company Root Entity & Dashboard
-- [ ] Create `Company` model with embedded `Address` & `Contact` subdocuments.
-- [ ] Implement `CompanyRepository`, `CompanyService`, `CompanyController`, and `/api/v1/companies` endpoints.
-- [ ] Build frontend `companySlice` and `api/companyApi.js`.
-- [ ] Implement Dashboard Summary Cards & Company Grid with "Add Company" modal.
-- [ ] Verify Company creation, updating, and soft deletion.
+- [x] Create `Company` model with embedded `Address` & `Contact` subdocuments.
+- [x] Implement `CompanyRepository`, `CompanyService`, `CompanyController`, and `/api/v1/companies` endpoints.
+- [x] Build frontend `companySlice` and `api/companyApi.js`.
+- [x] Implement Dashboard Summary Cards & Company Grid with "Add Company" modal.
+- [x] Verify Company creation, updating, and soft deletion.
 
 ---
 
