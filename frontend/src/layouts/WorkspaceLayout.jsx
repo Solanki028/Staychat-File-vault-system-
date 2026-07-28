@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Activity
 } from 'lucide-react';
+import GlobalSearchBar from '../components/GlobalSearchBar';
 import NotificationBell from '../components/NotificationBell';
 import AuditLogModal from '../components/AuditLogModal';
 
@@ -84,13 +85,15 @@ export default function WorkspaceLayout({ children, companyName = "Company Works
 
       {/* Main Workspace Body */}
       <main className="flex-1 flex flex-col min-w-0 z-10">
-        <header className="h-14 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md px-6 flex items-center justify-between">
-          <h1 className="text-sm font-semibold text-slate-200">Company Workspace</h1>
+        <header className="h-14 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md px-6 flex items-center justify-between gap-4">
+          {/* Debounced Global Search Engine */}
+          <GlobalSearchBar />
 
+          {/* Top Actions */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsAuditModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
               title="Audit Log"
             >
               <Activity className="w-3.5 h-3.5 text-indigo-400" />
