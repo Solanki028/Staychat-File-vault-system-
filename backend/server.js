@@ -10,6 +10,7 @@ import { errorMiddleware, notFoundHandler } from './middlewares/errorMiddleware.
 import authRoutes from './routes/authRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 
 dotenv.config();
@@ -58,6 +59,8 @@ app.use('/api/v1/companies', companyRoutes);
 app.use('/api/companies', companyRoutes); // Alias fallback
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/dashboard', dashboardRoutes); // Alias fallback
+app.use('/api/v1/documents', documentRoutes);
+app.use('/api/documents', documentRoutes); // Alias fallback
 
 // Existing file routes
 app.use('/files', fileRoutes);
