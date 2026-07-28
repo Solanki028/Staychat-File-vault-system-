@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink, useParams } from 'react-router-dom';
 import { 
   Building2, 
@@ -10,11 +10,15 @@ import {
   Receipt, 
   Settings, 
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from 'lucide-react';
+import NotificationBell from '../components/NotificationBell';
+import AuditLogModal from '../components/AuditLogModal';
 
-export default function WorkspaceLayout({ children, companyName = "Acme Workspace" }) {
+export default function WorkspaceLayout({ children, companyName = "Company Workspace" }) {
   const { companyId } = useParams();
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
   const navItems = [
     { name: 'Overview', path: `/workspace/${companyId}`, icon: Building2 },
@@ -82,12 +86,31 @@ export default function WorkspaceLayout({ children, companyName = "Acme Workspac
       <main className="flex-1 flex flex-col min-w-0 z-10">
         <header className="h-14 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md px-6 flex items-center justify-between">
           <h1 className="text-sm font-semibold text-slate-200">Company Workspace</h1>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsAuditModalOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
+              title="Audit Log"
+            >
+              <Activity className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Audit Logs</span>
+            </button>
+            <NotificationBell />
+          </div>
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">
           {children}
         </div>
       </main>
+
+      {/* Audit Log Modal */}
+      <AuditLogModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        companyId={companyId}
+      />
     </div>
   );
 }
