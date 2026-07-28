@@ -49,10 +49,10 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 4: Company Workspace Layout & Sidebar Navigation
-- [ ] Implement `WorkspaceLayout.jsx` with persistent sidebar navigation for active company context (`/workspace/:companyId/*`).
-- [ ] Build workspace header with company logo, switcher, and breadcrumb navigation.
-- [ ] Build workspace module sub-routes (`/overview`, `/documents`, `/employees`, `/partners`, `/vehicles`, `/banking`, `/invoices`, `/settings`).
-- [ ] Verify seamless workspace navigation and company state isolation.
+- [x] Implement `WorkspaceLayout.jsx` with persistent sidebar navigation for active company context (`/workspace/:companyId/*`).
+- [x] Build workspace header with company logo, switcher, and breadcrumb navigation.
+- [x] Build workspace module sub-routes (`/overview`, `/documents`, `/employees`, `/partners`, `/vehicles`, `/banking`, `/invoices`, `/settings`).
+- [x] Verify seamless workspace navigation and company state isolation.
 
 ---
 
