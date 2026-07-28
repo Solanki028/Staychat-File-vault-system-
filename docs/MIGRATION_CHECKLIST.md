@@ -108,11 +108,11 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 11: System Notifications & Activity Audit Logs
-- [ ] Create `Notification` and `ActivityLog` models.
-- [ ] Implement `NotificationService` and `ActivityLogService` triggering on all CRUD actions.
-- [ ] Build backend endpoints `/api/v1/notifications` and `/api/v1/activity/company/:companyId`.
-- [ ] Build frontend notification drawer with unread counter and workspace activity timeline.
-- [ ] Verify automated log entries and alert triggers.
+- [x] Create `Notification` and `ActivityLog` models.
+- [x] Implement `NotificationService` and `ActivityLogService` triggering on all CRUD actions.
+- [x] Build backend endpoints `/api/v1/notifications` and `/api/v1/activity/company/:companyId`.
+- [x] Build frontend notification drawer with unread counter and workspace activity timeline.
+- [x] Verify automated log entries and alert triggers.
 
 ---
 
