@@ -2,9 +2,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import fs from 'fs';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
+import { errorMiddleware, notFoundHandler } from './middlewares/errorMiddleware.js';
 import fileRoutes from './routes/fileRoutes.js';
 
 dotenv.config();
@@ -21,38 +23,35 @@ if (!fs.existsSync(uploadsDir)) {
 
 await connectDB();
 
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(
   cors({
     origin: process.env.CLIENT_URL || true,
-    methods: ['GET', 'POST', 'DELETE', 'PATCH'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true
   })
 );
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/', (_req, res) => {
   res.status(200).json({
-    message: 'Staychat Vault API is Online',
+    success: true,
+    message: 'Company Workspace & Secure Document Management Platform API',
     version: '2.0.0',
-    status: 'Running',
-    documentation: 'https://github.com/Solanki028/Staychat-File-vault-system-'
+    status: 'Running'
   });
 });
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', service: 'file-vault-system' });
+  res.status(200).json({ success: true, status: 'ok', service: 'company-workspace-api' });
 });
 
 app.use('/files', fileRoutes);
 
-app.use((error, _req, res, _next) => {
-  if (error.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ message: `File is too large. Max size is ${process.env.MAX_FILE_SIZE_MB || 10}MB.` });
-  }
-
-  return res.status(400).json({ message: error.message || 'Request failed.' });
-});
+app.use(notFoundHandler);
+app.use(errorMiddleware);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
