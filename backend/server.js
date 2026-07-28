@@ -18,6 +18,7 @@ import fileRoutes from './routes/fileRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
 import vehicleRoutes from './routes/vehicleRoutes.js';
 
 dotenv.config();
@@ -80,6 +81,7 @@ app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/invoices', invoiceRoutes); // Alias fallback
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/audit-logs', auditLogRoutes);
+app.use('/api/v1/search', searchRoutes);
 
 // Existing file routes
 app.use('/files', fileRoutes);
