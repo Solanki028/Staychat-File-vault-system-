@@ -99,11 +99,11 @@ Every phase must be executed strictly following the 4-Phase Workflow:
 ---
 
 ### Phase 10: Invoice System & PDF Generation Module
-- [ ] Create `InvoiceSettings` and `Invoice` models with embedded `LineItems` subdocuments.
-- [ ] Implement `InvoiceRepository`, `InvoiceService`, `InvoiceController`, and `/api/v1/invoices` endpoints.
-- [ ] Build PDF invoice export service engine (`POST /api/v1/invoices/:invoiceId/pdf`).
-- [ ] Build frontend Invoice list, invoice generator form, issuer settings tab, and PDF preview/download modal.
-- [ ] Verify invoice creation, calculation, and PDF export.
+- [x] Create `InvoiceSettings` and `Invoice` models with embedded `LineItems` subdocuments.
+- [x] Implement `InvoiceRepository`, `InvoiceService`, `InvoiceController`, and `/api/v1/invoices` endpoints.
+- [x] Build PDF invoice export service engine (`POST /api/v1/invoices/:invoiceId/pdf`).
+- [x] Build frontend Invoice list, invoice generator form, issuer settings tab, and PDF preview/download modal.
+- [x] Verify invoice creation, calculation, and PDF export.
 
 ---
 
